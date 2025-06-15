@@ -12,9 +12,26 @@ import { RootStackParamList, UserDetailScreenRouteProp } from '../../types/navig
 const mockStore = configureStore([]);
 const store = mockStore({
   users: {
-    list: mockUsers,
+    users: mockUsers,
     loading: false,
-    error: null
+    error: null,
+    selectedUser: {
+      id: 1,
+      name: 'John Doe',
+      email: 'john@example.com',
+      phone: '123456789',
+      address: {
+        street: 'Main St',
+        suite: 'Apt 1',
+        city: 'City',
+        zipcode: '12345',
+      },
+      company: {
+        name: 'Company',
+        catchPhrase: 'Catch phrase',
+        bs: 'bs',
+      },
+    },
   }
 });
 
@@ -26,6 +43,25 @@ jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: mockNavigate,
   }),
+}));
+jest.mock('@react-navigation/native-stack', () => ({
+  createNativeStackNavigator: () => ({
+    Navigator: ({ children }: { children: any }) => children,
+    Screen: ({ children }: { children: any }) => children,
+  }),
+}));
+
+jest.mock('@expo/vector-icons', () => ({
+  Ionicons: () => null,
+}));
+
+jest.mock('../../context/ThemeContext', () => ({
+  useTheme: () => ({ isDarkMode: false, toggleTheme: jest.fn() }),
+}));
+
+jest.mock('../../store/userSlice', () => ({
+  fetchUsers: () => ({ type: 'users/fetchUsers' }),
+  fetchUserById: () => ({ type: 'users/fetchUserById' }),
 }));
 
 const renderWithNavigation = (component: React.ReactElement) => {
@@ -50,9 +86,10 @@ describe('UserList', () => {
   it('renders loading state initially', () => {
     const loadingStore = mockStore({
       users: {
-        list: [],
+        users: [],
         loading: true,
-        error: null
+        error: null,
+        selectedUser: null,
       }
     });
     
@@ -67,9 +104,10 @@ describe('UserList', () => {
   it('renders error state when there is an error', () => {
     const errorStore = mockStore({
       users: {
-        list: [],
+        users: [],
         loading: false,
-        error: 'Error al cargar usuarios'
+        error: 'Error al cargar usuarios',
+        selectedUser: null,
       }
     });
     
@@ -130,9 +168,10 @@ describe('UserDetail', () => {
   it('shows loading state initially', () => {
     const loadingStore = mockStore({
       users: {
-        list: [],
+        users: [],
         loading: true,
-        error: null
+        error: null,
+        selectedUser: null,
       }
     });
 
@@ -144,16 +183,16 @@ describe('UserDetail', () => {
         />
       </Provider>
     );
-
-    expect(getByText('Cargando detalles...')).toBeTruthy();
+    expect(getByText('Cargando detalles del usuario...')).toBeTruthy();
   });
 
   it('shows error state when user is not found', () => {
     const errorStore = mockStore({
       users: {
-        list: [],
+        users: [],
         loading: false,
-        error: 'Usuario no encontrado'
+        error: 'Usuario no encontrado',
+        selectedUser: null,
       }
     });
 
